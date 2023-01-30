@@ -16,22 +16,30 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use clap::Parser;
 use image::{Pixel, Rgba};
-use std::path::PathBuf;
+use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about=None)]
 struct Cmd {
     image: PathBuf,
+    #[arg(short, long)]
+    output: Option<PathBuf>,
 }
 fn main() -> Result<(), image::ImageError> {
     let args = Cmd::parse();
+    let output_file = args.output.unwrap_or(
+        args.image
+            .file_name()
+            .unwrap_or(OsStr::new("output.jpg"))
+            .into(),
+    );
     let mut image = image::open(args.image)?.to_rgba8();
     image.pixels_mut().for_each(|pixel| {
         let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
         let channels_f32 = f32::from_ne_bytes(bytes.try_into().unwrap());
         *pixel = Rgba::from(channels_f32.ln().to_ne_bytes())
     });
-    image.save("test.jpg")?;
+    image.save(output_file)?;
 
     Ok(())
 }
