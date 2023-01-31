@@ -14,31 +14,44 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use image::{Pixel, Rgba};
 use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about=None)]
 struct Cmd {
-    image: PathBuf,
+    #[command(subcommand)]
+    mode: Mode,
+    #[arg(short, long)]
+    input: PathBuf,
     #[arg(short, long)]
     output: Option<PathBuf>,
+}
+
+#[derive(Subcommand, Clone, Copy, Debug)]
+enum Mode {
+    Cbrt,
+    PixelSort,
 }
 fn main() -> Result<(), image::ImageError> {
     let args = Cmd::parse();
     let output_file = args.output.unwrap_or(
-        args.image
+        args.input
             .file_name()
             .unwrap_or(OsStr::new("output.jpg"))
             .into(),
     );
-    let mut image = image::open(args.image)?.to_rgba8();
-    image.pixels_mut().for_each(|pixel| {
-        let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
-        let channels_f32 = f32::from_ne_bytes(bytes.try_into().unwrap());
-        *pixel = Rgba::from(channels_f32.ln().to_ne_bytes())
-    });
+    let mut image = image::open(args.input)?.to_rgba8();
+
+    match args.mode {
+        Mode::Cbrt => image.pixels_mut().for_each(|pixel| {
+            let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
+            let channels_f32 = f32::from_ne_bytes(bytes.try_into().unwrap());
+            *pixel = Rgba::from(channels_f32.cbrt().to_ne_bytes())
+        }),
+        Mode::PixelSort => {}
+    }
     image.save(output_file)?;
 
     Ok(())
