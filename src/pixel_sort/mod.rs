@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 pub use self::interval::Interval;
-use self::sorter::sort_image;
+use self::{sorter::sort_image, sorting::lightness};
 use image::{imageops::rotate270, imageops::rotate90, Rgba, RgbaImage};
 
 pub fn pixel_sort(
@@ -53,7 +53,7 @@ where
     F: Fn(&RgbaImage) -> Vec<Vec<u32>>,
 {
     let intervals = interval_fn(&image);
-    let pixels = sort_image(&image, intervals);
+    let pixels = sort_image(&image, intervals, lightness);
     place_pixels(pixels, &image)
 }
 
