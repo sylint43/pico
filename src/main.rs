@@ -16,14 +16,17 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use clap::{Parser, Subcommand};
 use image::{Pixel, Rgba};
-use pico::pixel_sort::{pixel_sort, Interval};
+use pico::pixel_sort::{
+    interval::{Random, Threshold},
+    pixel_sort,
+};
 use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about=None)]
 struct Cmd {
     #[command(subcommand)]
-    mode: Mode,
+    glitch: GlitchMode,
     #[arg(short, long)]
     input: PathBuf,
     #[arg(short, long)]
@@ -31,15 +34,23 @@ struct Cmd {
 }
 
 #[derive(Subcommand, Debug)]
-enum Mode {
+enum GlitchMode {
     Cbrt,
     PixelSort {
+        #[command(subcommand)]
+        interval: IntervalMode,
+    },
+}
+
+#[derive(Subcommand, Debug)]
+enum IntervalMode {
+    Threshold {
         #[arg(default_value_t = 0.2, short, long)]
-        lower_threshold: f32,
+        lower: f32,
         #[arg(default_value_t = 0.85, short, long)]
-        upper_threshold: f32,
-        #[arg(default_value_t = Interval::Threshold, value_enum, short, long)]
-        interval: Interval,
+        upper: f32,
+    },
+    Random {
         #[arg(default_value_t = 50, short, long)]
         scale: u32,
     },
@@ -55,8 +66,8 @@ fn main() -> Result<(), image::ImageError> {
     );
     let mut image = image::open(args.input)?.to_rgba8();
 
-    let output_image = match args.mode {
-        Mode::Cbrt => {
+    let output_image = match args.glitch {
+        GlitchMode::Cbrt => {
             image.pixels_mut().for_each(|pixel| {
                 let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
                 let channels_f32 = f32::from_ne_bytes(bytes.try_into().unwrap());
@@ -65,12 +76,12 @@ fn main() -> Result<(), image::ImageError> {
 
             image
         }
-        Mode::PixelSort {
-            upper_threshold,
-            lower_threshold,
-            interval,
-            scale,
-        } => pixel_sort(image, lower_threshold, upper_threshold, interval, scale),
+        GlitchMode::PixelSort { interval } => match interval {
+            IntervalMode::Threshold { lower, upper } => {
+                pixel_sort(image, &Threshold { lower, upper })
+            }
+            IntervalMode::Random { scale } => pixel_sort(image, &Random { scale }),
+        },
     };
 
     output_image.save(output_file)?;

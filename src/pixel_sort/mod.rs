@@ -14,51 +14,23 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
-pub use self::interval::Interval;
+use self::interval::Interval;
 use self::{sorter::sort_image, sorting::lightness};
 use image::{imageops::rotate270, imageops::rotate90, ImageBuffer, RgbaImage};
 
-pub fn pixel_sort(
-    image: RgbaImage,
-    lower_threshold: f32,
-    upper_threshold: f32,
-    interval: Interval,
-    scale: u32,
-) -> RgbaImage {
-    match interval {
-        Interval::Threshold => {
-            let interval_fn = |lower_threshold: f32, upper_threshold: f32| {
-                move |image: &RgbaImage| {
-                    interval::threshold(image, lower_threshold, upper_threshold)
-                }
-            };
-            let vertical_sort = helper(
-                rotate90(&image),
-                interval_fn(lower_threshold, upper_threshold),
-            );
-            helper(
-                rotate270(&vertical_sort),
-                interval_fn(lower_threshold, upper_threshold),
-            )
-        }
-        Interval::Random => {
-            let interval_fn = |scale: u32| move |image: &RgbaImage| interval::random(image, scale);
-            helper(image, interval_fn(scale))
-        }
-    }
+pub fn pixel_sort(image: RgbaImage, interval: &impl Interval) -> RgbaImage {
+    let vertical_sort = helper(rotate90(&image), interval);
+    helper(rotate270(&vertical_sort), interval)
 }
 
-fn helper<F>(image: RgbaImage, interval_fn: F) -> RgbaImage
-where
-    F: Fn(&RgbaImage) -> Vec<Vec<u32>>,
-{
-    let intervals = interval_fn(&image);
+fn helper(image: RgbaImage, interval: &impl Interval) -> RgbaImage {
+    let intervals = interval.create_intervals(&image);
     let pixels = sort_image(&image, intervals, lightness);
     ImageBuffer::from_fn(image.width(), image.height(), |x, y| {
         *pixels[y as usize][x as usize]
     })
 }
 
-mod interval;
+pub mod interval;
 mod sorter;
 mod sorting;
