@@ -15,9 +15,14 @@
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use self::sorter::sort_image;
-use image::{Rgba, RgbaImage};
+use image::{imageops::rotate270, imageops::rotate90, Rgba, RgbaImage};
 
 pub fn pixel_sort(image: RgbaImage, lower_threshold: f32, upper_threshold: f32) -> RgbaImage {
+    let vertical_sort = helper(rotate90(&image), lower_threshold, upper_threshold);
+    helper(rotate270(&vertical_sort), lower_threshold, upper_threshold)
+}
+
+fn helper(image: RgbaImage, lower_threshold: f32, upper_threshold: f32) -> RgbaImage {
     let intervals = interval::threshold(&image, lower_threshold, upper_threshold);
     let pixels = sort_image(&image, intervals);
     place_pixels(pixels, &image)
