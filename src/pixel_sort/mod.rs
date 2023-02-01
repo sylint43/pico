@@ -16,7 +16,7 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 pub use self::interval::Interval;
 use self::{sorter::sort_image, sorting::lightness};
-use image::{imageops::rotate270, imageops::rotate90, Rgba, RgbaImage};
+use image::{imageops::rotate270, imageops::rotate90, ImageBuffer, RgbaImage};
 
 pub fn pixel_sort(
     image: RgbaImage,
@@ -54,17 +54,9 @@ where
 {
     let intervals = interval_fn(&image);
     let pixels = sort_image(&image, intervals, lightness);
-    place_pixels(pixels, &image)
-}
-
-fn place_pixels(pixels: Vec<Vec<&Rgba<u8>>>, original: &RgbaImage) -> RgbaImage {
-    let mut output = RgbaImage::new(original.width(), original.height());
-
-    for (x, y, pixel) in output.enumerate_pixels_mut() {
-        *pixel = *pixels[y as usize][x as usize];
-    }
-
-    output
+    ImageBuffer::from_fn(image.width(), image.height(), |x, y| {
+        *pixels[y as usize][x as usize]
+    })
 }
 
 mod interval;
