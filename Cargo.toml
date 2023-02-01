@@ -11,3 +11,4 @@ description = "A small image editor"
 image = "0.24"
 clap = { version = "4.1", features = ["derive"] }
 ordered-float = "3.4"
+rand = "0.8"

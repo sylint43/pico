@@ -16,23 +16,56 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::sorting::lightness;
+use clap::ValueEnum;
 use image::RgbaImage;
 use ordered_float::OrderedFloat;
+use rand::Rng;
+
+/*
+Intervals are (x, y) pixel coordinates into the input image that marks the end of a interval
+of pixels. They will always have image.height() rows but each row may not have image.width() columns.
+
+A coordinate is inserted into the vec based on the interval function used to create the intervals
+
+Threshold looks for pixels within a certain lightness threshold and marks pixels that don't pass
+Random randomly jumps to a pixel in a row and adds it to the interval list. Can be scaled.
+ */
 
 pub fn threshold(image: &RgbaImage, lower_threshold: f32, upper_threshold: f32) -> Vec<Vec<u32>> {
-    let mut intervals: Vec<Vec<u32>> = vec![];
+    let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
     for (x, y, p) in image.enumerate_pixels() {
         let level = lightness(p);
         if level < OrderedFloat(lower_threshold * 255.)
             || level > OrderedFloat(upper_threshold * 255.)
         {
-            if let Some(row) = intervals.get_mut(y as usize) {
-                row.push(x);
-            } else {
-                intervals.push(vec![x]);
-            }
+            intervals[y as usize].push(x);
         }
     }
 
     intervals
+}
+
+pub fn random(image: &RgbaImage, scale: u32) -> Vec<Vec<u32>> {
+    let mut rng = rand::thread_rng();
+    let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
+
+    for y in 0..image.height() {
+        let mut x = 0;
+        loop {
+            x += (scale as f32 * rng.gen::<f32>()) as u32;
+            if x > image.width() {
+                break;
+            }
+
+            intervals[y as usize].push(x);
+        }
+    }
+
+    intervals
+}
+
+#[derive(ValueEnum, Debug, Clone, Copy)]
+pub enum Interval {
+    Threshold,
+    Random,
 }

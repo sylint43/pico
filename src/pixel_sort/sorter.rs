@@ -14,28 +14,26 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
-
 use super::sorting::lightness;
 use image::{Rgba, RgbaImage};
-use ordered_float::OrderedFloat;
 
 pub fn sort_image(image: &RgbaImage, intervals: Vec<Vec<u32>>) -> Vec<Vec<&Rgba<u8>>> {
     let mut sorted_pixels = vec![];
     for y in 0..image.height() {
         let mut row: Vec<&Rgba<u8>> = vec![];
         let mut x_min = 0;
-        let mut xs = if let Some(row) = intervals.get(y as usize) {
-            row.clone()
-        } else {
-            vec![]
-        };
-        xs.push(image.width());
+        let mut xs = intervals[y as usize].clone();
+        xs.push(image.width()); // ensure we go through the entire row
+
+        // For loop progressivly takes interval end-point and copies all the pixels
+        // from the last end-point to the current, then sorts.
         for x_max in xs {
             let mut interval = vec![];
             for x in x_min..x_max {
                 interval.push(image.get_pixel(x, y))
             }
-            row.extend(sort_interval(interval, lightness));
+            interval.sort_by_key(|p| lightness(p));
+            row.extend(interval);
             x_min = x_max;
         }
 
@@ -43,13 +41,4 @@ pub fn sort_image(image: &RgbaImage, intervals: Vec<Vec<u32>>) -> Vec<Vec<&Rgba<
     }
 
     sorted_pixels
-}
-
-fn sort_interval(
-    interval: Vec<&Rgba<u8>>,
-    sort_function: fn(&Rgba<u8>) -> OrderedFloat<f32>,
-) -> Vec<&Rgba<u8>> {
-    let mut ret = interval.clone();
-    ret.sort_by_key(|p| sort_function(p));
-    ret
 }

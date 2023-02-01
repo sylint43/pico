@@ -16,7 +16,7 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use clap::{Parser, Subcommand};
 use image::{Pixel, Rgba};
-use pico::pixel_sort::pixel_sort;
+use pico::pixel_sort::{pixel_sort, Interval};
 use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug, Parser)]
@@ -30,14 +30,21 @@ struct Cmd {
     output: Option<PathBuf>,
 }
 
-#[derive(Subcommand, Clone, Copy, Debug)]
+#[derive(Subcommand, Debug)]
 enum Mode {
     Cbrt,
     PixelSort {
+        #[arg(default_value_t = 0.2, short, long)]
         lower_threshold: f32,
+        #[arg(default_value_t = 0.85, short, long)]
         upper_threshold: f32,
+        #[arg(default_value_t = Interval::Threshold, value_enum, short, long)]
+        interval: Interval,
+        #[arg(default_value_t = 50, short, long)]
+        scale: u32,
     },
 }
+
 fn main() -> Result<(), image::ImageError> {
     let args = Cmd::parse();
     let output_file = args.output.unwrap_or(
@@ -61,7 +68,9 @@ fn main() -> Result<(), image::ImageError> {
         Mode::PixelSort {
             upper_threshold,
             lower_threshold,
-        } => pixel_sort(image, lower_threshold, upper_threshold),
+            interval,
+            scale,
+        } => pixel_sort(image, lower_threshold, upper_threshold, interval, scale),
     };
 
     output_image.save(output_file)?;
