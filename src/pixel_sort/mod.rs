@@ -37,13 +37,7 @@ impl PixelSort {
     pub fn sort(&self) -> RgbaImage {
         let intervals = self.interval.create_intervals(&self.image);
         let pixels = self.sort_pixels(intervals, lightness);
-        ImageBuffer::from_fn(self.image.width(), self.image.height(), |x, y| {
-            if self.mask.get_pixel(x, y).0[0] == 0 {
-                *self.image.get_pixel(x, y)
-            } else {
-                *pixels[y as usize][x as usize]
-            }
-        })
+        self.place_pixels(pixels)
     }
 
     fn sort_pixels<F>(&self, intervals: Vec<Vec<u32>>, sorting_fn: F) -> Vec<Vec<&Rgba<u8>>>
@@ -73,6 +67,24 @@ impl PixelSort {
                 row
             })
             .collect::<Vec<Vec<&Rgba<u8>>>>()
+    }
+
+    fn place_pixels(&self, pixels: Vec<Vec<&Rgba<u8>>>) -> RgbaImage {
+        let mut image = ImageBuffer::new(self.image.width(), self.image.height());
+
+        for y in 0..self.image.height() {
+            let mut count = 0;
+            for x in 0..self.image.width() {
+                if self.mask.get_pixel(x, y).0[0] == 0 {
+                    image.put_pixel(x, y, *self.image.get_pixel(x, y));
+                } else {
+                    image.put_pixel(x, y, *pixels[y as usize][count]);
+                    count += 1;
+                }
+            }
+        }
+
+        image
     }
 }
 
