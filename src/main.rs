@@ -15,10 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use clap::{Parser, Subcommand};
-use image::{Pixel, Rgba};
+use image::{ImageBuffer, Pixel, Rgba};
 use pico::pixel_sort::{
-    interval::{Random, Threshold},
-    pixel_sort,
+    interval::{Interval, Random, Threshold},
+    PixelSort,
 };
 use std::{ffi::OsStr, path::PathBuf};
 
@@ -39,6 +39,8 @@ enum GlitchMode {
     PixelSort {
         #[command(subcommand)]
         interval: IntervalMode,
+        #[arg(short, long)]
+        mask: Option<PathBuf>,
     },
 }
 
@@ -76,12 +78,25 @@ fn main() -> Result<(), image::ImageError> {
 
             image
         }
-        GlitchMode::PixelSort { interval } => match interval {
-            IntervalMode::Threshold { lower, upper } => {
-                pixel_sort(image, &Threshold { lower, upper })
-            }
-            IntervalMode::Random { scale } => pixel_sort(image, &Random { scale }),
-        },
+        GlitchMode::PixelSort { interval, mask } => {
+            let mask = match mask {
+                Some(path) => image::open(path)?.to_luma8(),
+                None => ImageBuffer::from_fn(image.width(), image.height(), |_, _| [255].into()),
+            };
+
+            assert_eq!(
+                mask.dimensions(),
+                image.dimensions(),
+                "Mask must be same size as input image"
+            );
+
+            let interval: Box<dyn Interval> = match interval {
+                IntervalMode::Threshold { lower, upper } => Box::new(Threshold { lower, upper }),
+                IntervalMode::Random { scale } => Box::new(Random { scale }),
+            };
+
+            PixelSort::new(image, mask, interval).sort()
+        }
     };
 
     output_image.save(output_file)?;
