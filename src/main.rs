@@ -33,7 +33,10 @@ struct Cmd {
 #[derive(Subcommand, Clone, Copy, Debug)]
 enum Mode {
     Cbrt,
-    PixelSort,
+    PixelSort {
+        lower_threshold: f32,
+        upper_threshold: f32,
+    },
 }
 fn main() -> Result<(), image::ImageError> {
     let args = Cmd::parse();
@@ -54,8 +57,11 @@ fn main() -> Result<(), image::ImageError> {
             });
             image.save(output_file)?;
         }
-        Mode::PixelSort => {
-            let sorted_image = pixel_sort(image);
+        Mode::PixelSort {
+            upper_threshold,
+            lower_threshold,
+        } => {
+            let sorted_image = pixel_sort(image, lower_threshold, upper_threshold);
 
             sorted_image.save(output_file)?;
         }

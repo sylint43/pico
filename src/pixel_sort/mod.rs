@@ -17,8 +17,8 @@
 use self::sorter::sort_image;
 use image::{Rgba, RgbaImage};
 
-pub fn pixel_sort(image: RgbaImage) -> RgbaImage {
-    let intervals = interval::threshold(&image, 0.2, 0.85);
+pub fn pixel_sort(image: RgbaImage, lower_threshold: f32, upper_threshold: f32) -> RgbaImage {
+    let intervals = interval::threshold(&image, lower_threshold, upper_threshold);
     let pixels = sort_image(&image, intervals);
     place_pixels(pixels, &image)
 }
