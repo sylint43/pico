@@ -48,24 +48,23 @@ fn main() -> Result<(), image::ImageError> {
     );
     let mut image = image::open(args.input)?.to_rgba8();
 
-    match args.mode {
+    let output_image = match args.mode {
         Mode::Cbrt => {
             image.pixels_mut().for_each(|pixel| {
                 let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
                 let channels_f32 = f32::from_ne_bytes(bytes.try_into().unwrap());
                 *pixel = Rgba::from(channels_f32.cbrt().to_ne_bytes())
             });
-            image.save(output_file)?;
+
+            image
         }
         Mode::PixelSort {
             upper_threshold,
             lower_threshold,
-        } => {
-            let sorted_image = pixel_sort(image, lower_threshold, upper_threshold);
+        } => pixel_sort(image, lower_threshold, upper_threshold),
+    };
 
-            sorted_image.save(output_file)?;
-        }
-    }
+    output_image.save(output_file)?;
 
     Ok(())
 }
