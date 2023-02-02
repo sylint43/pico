@@ -28,6 +28,8 @@ struct Cmd {
     input: PathBuf,
     #[arg(short, long)]
     output: Option<PathBuf>,
+    #[arg(short, long, value_enum)]
+    angle: Option<Angle>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -71,6 +73,13 @@ enum Sort {
     Minimum,
 }
 
+#[derive(ValueEnum, Debug, Copy, Clone)]
+enum Angle {
+    Ninty,
+    OneEighty,
+    TwoSeventy,
+}
+
 fn main() -> Result<(), image::ImageError> {
     let args = Cmd::parse();
     let output_file = args.output.unwrap_or(
@@ -81,7 +90,14 @@ fn main() -> Result<(), image::ImageError> {
     );
     let mut image = image::open(args.input)?.to_rgba8();
 
-    let output_image = match args.glitch {
+    image = match args.angle {
+        Some(Angle::Ninty) => image::imageops::rotate90(&image),
+        Some(Angle::OneEighty) => image::imageops::rotate180(&image),
+        Some(Angle::TwoSeventy) => image::imageops::rotate270(&image),
+        None => image,
+    };
+
+    let mut output_image = match args.glitch {
         GlitchMode::Cbrt => {
             image.pixels_mut().for_each(|pixel| {
                 let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
@@ -126,6 +142,13 @@ fn main() -> Result<(), image::ImageError> {
 
             PixelSort::new(image, mask, interval, sort).sort()
         }
+    };
+
+    output_image = match args.angle {
+        Some(Angle::Ninty) => image::imageops::rotate270(&output_image),
+        Some(Angle::OneEighty) => image::imageops::rotate180(&output_image),
+        Some(Angle::TwoSeventy) => image::imageops::rotate90(&output_image),
+        None => output_image,
     };
 
     output_image.save(output_file)?;
