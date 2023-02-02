@@ -15,32 +15,41 @@
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use self::interval::Interval;
-use self::sorting::lightness;
 use image::{GrayImage, ImageBuffer, Rgba, RgbaImage};
 use ordered_float::OrderedFloat;
+pub use sorting::*;
+
+pub type SortFn = dyn Fn(&Rgba<u8>) -> OrderedFloat<f32>;
 
 pub struct PixelSort {
     image: RgbaImage,
     mask: GrayImage,
     interval: Box<dyn Interval>,
+    sort_fn: Box<SortFn>,
 }
 
 impl PixelSort {
-    pub fn new(image: RgbaImage, mask: GrayImage, interval: Box<dyn Interval>) -> Self {
+    pub fn new(
+        image: RgbaImage,
+        mask: GrayImage,
+        interval: Box<dyn Interval>,
+        sort_fn: Box<SortFn>,
+    ) -> Self {
         Self {
             image,
             mask,
             interval,
+            sort_fn,
         }
     }
 
     pub fn sort(&self) -> RgbaImage {
         let intervals = self.interval.create_intervals(&self.image);
-        let pixels = self.sort_pixels(intervals, lightness);
+        let pixels = self.sort_pixels(intervals, &self.sort_fn);
         self.place_pixels(pixels)
     }
 
-    fn sort_pixels<F>(&self, intervals: Vec<Vec<u32>>, sorting_fn: F) -> Vec<Vec<&Rgba<u8>>>
+    fn sort_pixels<F>(&self, intervals: Vec<Vec<u32>>, sort_fn: F) -> Vec<Vec<&Rgba<u8>>>
     where
         F: Fn(&Rgba<u8>) -> OrderedFloat<f32>,
     {
@@ -60,7 +69,7 @@ impl PixelSort {
                             .filter(|x| self.mask.get_pixel(*x, y).0[0] == 255)
                             .map(|x| self.image.get_pixel(x, y))
                             .collect::<Vec<&Rgba<u8>>>();
-                        interval.sort_by_key(|p| sorting_fn(p));
+                        interval.sort_by_key(|p| sort_fn(p));
                         interval
                     })
                     .collect::<Vec<&Rgba<u8>>>();

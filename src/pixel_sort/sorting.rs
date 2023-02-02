@@ -28,3 +28,68 @@ pub fn lightness(pixel: &Rgba<u8>) -> OrderedFloat<f32> {
         unreachable!()
     }
 }
+
+pub fn hue(pixel: &Rgba<u8>) -> OrderedFloat<f32> {
+    if let [r, g, b, _] = pixel.channels() {
+        let max = *r.max(g.max(b)) as f32;
+        let min = *r.min(g.min(b)) as f32;
+
+        if max == min {
+            return OrderedFloat(0.);
+        }
+
+        let chroma = max - min;
+
+        let r_chroma = (max - *r as f32) / chroma;
+        let g_chroma = (max - *g as f32) / chroma;
+        let b_chroma = (max - *b as f32) / chroma;
+
+        let h = if *r as f32 == max {
+            b_chroma - g_chroma
+        } else if *g as f32 == max {
+            2. + r_chroma - b_chroma
+        } else {
+            4. + g_chroma - r_chroma
+        };
+
+        OrderedFloat((h / 6.) % 1.)
+    } else {
+        unreachable!()
+    }
+}
+
+pub fn saturation(pixel: &Rgba<u8>) -> OrderedFloat<f32> {
+    if let [r, g, b, _] = pixel.channels() {
+        let max = *r.max(g.max(b)) as f32;
+        let min = *r.min(g.min(b)) as f32;
+        let l = (min + max) / 2.;
+
+        if min == max {
+            return OrderedFloat(0.);
+        }
+
+        if l <= 0.5 {
+            OrderedFloat((max - min) / (max + min))
+        } else {
+            OrderedFloat((max - min) / (2. - max - min))
+        }
+    } else {
+        unreachable!()
+    }
+}
+
+pub fn intensity(pixel: &Rgba<u8>) -> OrderedFloat<f32> {
+    if let [r, g, b, _] = pixel.channels() {
+        OrderedFloat(*r as f32 + *g as f32 + *b as f32)
+    } else {
+        unreachable!()
+    }
+}
+
+pub fn minimum(pixel: &Rgba<u8>) -> OrderedFloat<f32> {
+    if let [r, g, b, _] = pixel.channels() {
+        OrderedFloat((*r.min(g.min(b))) as f32)
+    } else {
+        unreachable!()
+    }
+}

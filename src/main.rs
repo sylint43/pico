@@ -14,11 +14,12 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use image::{ImageBuffer, Pixel, Rgba};
 use pico::pixel_sort::{
+    self,
     interval::{Interval, Random, Threshold},
-    PixelSort,
+    PixelSort, SortFn,
 };
 use std::{ffi::OsStr, path::PathBuf};
 
@@ -41,6 +42,8 @@ enum GlitchMode {
         interval: IntervalMode,
         #[arg(short, long)]
         mask: Option<PathBuf>,
+        #[arg(short, long, value_enum)]
+        sort: Sort,
     },
 }
 
@@ -56,6 +59,15 @@ enum IntervalMode {
         #[arg(default_value_t = 50, short, long)]
         scale: u32,
     },
+}
+
+#[derive(ValueEnum, Debug, Copy, Clone)]
+enum Sort {
+    Lightness,
+    Hue,
+    Saturation,
+    Intensity,
+    Minimum,
 }
 
 fn main() -> Result<(), image::ImageError> {
@@ -78,7 +90,11 @@ fn main() -> Result<(), image::ImageError> {
 
             image
         }
-        GlitchMode::PixelSort { interval, mask } => {
+        GlitchMode::PixelSort {
+            interval,
+            mask,
+            sort,
+        } => {
             let mask = match mask {
                 Some(path) => image::open(path)?.to_luma8(),
                 None => ImageBuffer::from_fn(image.width(), image.height(), |_, _| [255].into()),
@@ -95,7 +111,15 @@ fn main() -> Result<(), image::ImageError> {
                 IntervalMode::Random { scale } => Box::new(Random { scale }),
             };
 
-            PixelSort::new(image, mask, interval).sort()
+            let sort: Box<SortFn> = match sort {
+                Sort::Lightness => Box::new(pixel_sort::lightness),
+                Sort::Hue => Box::new(pixel_sort::hue),
+                Sort::Saturation => Box::new(pixel_sort::saturation),
+                Sort::Intensity => Box::new(pixel_sort::intensity),
+                Sort::Minimum => Box::new(pixel_sort::minimum),
+            };
+
+            PixelSort::new(image, mask, interval, sort).sort()
         }
     };
 
