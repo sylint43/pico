@@ -113,7 +113,16 @@ fn main() -> Result<(), image::ImageError> {
             sort,
         } => {
             let mask = match mask {
-                Some(path) => image::open(path)?.to_luma8(),
+                Some(path) => match args.angle {
+                    Some(Angle::Ninty) => image::imageops::rotate90(&image::open(path)?.to_luma8()),
+                    Some(Angle::OneEighty) => {
+                        image::imageops::rotate180(&image::open(path)?.to_luma8())
+                    }
+                    Some(Angle::TwoSeventy) => {
+                        image::imageops::rotate270(&image::open(path)?.to_luma8())
+                    }
+                    None => image::open(path)?.to_luma8(),
+                },
                 None => ImageBuffer::from_fn(image.width(), image.height(), |_, _| [255].into()),
             };
 
