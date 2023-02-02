@@ -77,3 +77,11 @@ impl Interval for Random {
         intervals
     }
 }
+
+pub struct None;
+
+impl Interval for None {
+    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
+        vec![vec![]; image.height() as usize]
+    }
+}

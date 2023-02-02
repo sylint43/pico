@@ -16,11 +16,7 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use clap::{Parser, Subcommand, ValueEnum};
 use image::{ImageBuffer, Pixel, Rgba};
-use pico::pixel_sort::{
-    self,
-    interval::{Interval, Random, Threshold},
-    PixelSort, SortFn,
-};
+use pico::pixel_sort::{self, interval, PixelSort, SortFn};
 use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug, Parser)]
@@ -59,6 +55,7 @@ enum IntervalMode {
         #[arg(default_value_t = 50, short, long)]
         scale: u32,
     },
+    None,
 }
 
 #[derive(ValueEnum, Debug, Copy, Clone)]
@@ -106,9 +103,12 @@ fn main() -> Result<(), image::ImageError> {
                 "Mask must be same size as input image"
             );
 
-            let interval: Box<dyn Interval> = match interval {
-                IntervalMode::Threshold { lower, upper } => Box::new(Threshold { lower, upper }),
-                IntervalMode::Random { scale } => Box::new(Random { scale }),
+            let interval: Box<dyn interval::Interval> = match interval {
+                IntervalMode::Threshold { lower, upper } => {
+                    Box::new(interval::Threshold { lower, upper })
+                }
+                IntervalMode::Random { scale } => Box::new(interval::Random { scale }),
+                IntervalMode::None => Box::new(interval::None),
             };
 
             let sort: Box<SortFn> = match sort {
