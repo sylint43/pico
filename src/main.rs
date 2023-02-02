@@ -55,6 +55,10 @@ enum IntervalMode {
         #[arg(default_value_t = 50, short, long)]
         scale: u32,
     },
+    Wave {
+        #[arg(default_value_t = 50, short, long)]
+        scale: u32,
+    },
     None,
 }
 
@@ -108,6 +112,7 @@ fn main() -> Result<(), image::ImageError> {
                     Box::new(interval::Threshold { lower, upper })
                 }
                 IntervalMode::Random { scale } => Box::new(interval::Random { scale }),
+                IntervalMode::Wave { scale } => Box::new(interval::Wave { scale }),
                 IntervalMode::None => Box::new(interval::None),
             };
 

@@ -78,6 +78,31 @@ impl Interval for Random {
     }
 }
 
+pub struct Wave {
+    pub scale: u32,
+}
+
+impl Interval for Wave {
+    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
+        let mut rng = rand::thread_rng();
+        let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
+
+        for y in 0..image.height() {
+            let mut x = 0;
+            loop {
+                x += self.scale + rng.gen_range(0..10);
+                if x > image.width() {
+                    break;
+                }
+
+                intervals[y as usize].push(x);
+            }
+        }
+
+        intervals
+    }
+}
+
 pub struct None;
 
 impl Interval for None {
