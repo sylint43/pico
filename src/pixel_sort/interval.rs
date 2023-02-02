@@ -16,7 +16,7 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::sorting::lightness;
-use image::RgbaImage;
+use image::{GrayImage, RgbaImage};
 use ordered_float::OrderedFloat;
 use rand::Rng;
 
@@ -100,6 +100,28 @@ impl Interval for Wave {
         }
 
         intervals
+    }
+}
+
+pub struct File {
+    pub mask: GrayImage,
+}
+
+impl Interval for File {
+    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
+        assert_eq!(
+            image.dimensions(),
+            self.mask.dimensions(),
+            "Mask must be same size as input image"
+        );
+
+        (0..self.mask.height())
+            .map(|y| {
+                (0..self.mask.width())
+                    .filter(|x| self.mask.get_pixel(*x, y).0[0] == 0)
+                    .collect::<Vec<u32>>()
+            })
+            .collect()
     }
 }
 
