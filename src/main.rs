@@ -38,7 +38,7 @@ enum GlitchMode {
         interval: IntervalMode,
         #[arg(short, long)]
         mask: Option<PathBuf>,
-        #[arg(short, long, value_enum)]
+        #[arg(short, long, value_enum, default_value_t=Sort::Lightness)]
         sort: Sort,
     },
 }
