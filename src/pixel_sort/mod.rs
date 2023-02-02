@@ -82,13 +82,12 @@ impl PixelSort {
         let mut image = ImageBuffer::new(self.image.width(), self.image.height());
 
         for y in 0..self.image.height() {
-            let mut count = 0;
+            let mut pixels = pixels[y as usize].iter();
             for x in 0..self.image.width() {
                 if self.mask.get_pixel(x, y).0[0] == 0 {
                     image.put_pixel(x, y, *self.image.get_pixel(x, y));
                 } else {
-                    image.put_pixel(x, y, *pixels[y as usize][count]);
-                    count += 1;
+                    image.put_pixel(x, y, **pixels.next().unwrap());
                 }
             }
         }
