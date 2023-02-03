@@ -115,13 +115,15 @@ impl Interval for File {
             "Mask must be same size as input image"
         );
 
-        (0..self.mask.height())
-            .map(|y| {
-                (0..self.mask.width())
-                    .filter(|x| self.mask.get_pixel(*x, y).0[0] == 0)
-                    .collect::<Vec<u32>>()
-            })
-            .collect()
+        let mut intervals = vec![vec![]; image.height() as usize];
+
+        for (x, y, p) in self.mask.enumerate_pixels() {
+            if p.0[0] == 0 {
+                intervals[y as usize].push(x)
+            }
+        }
+
+        intervals
     }
 }
 
