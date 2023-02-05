@@ -66,7 +66,7 @@ impl PixelSort {
                     .flat_map(<&[&u32; 2]>::try_from)
                     .flat_map(|[&start, &end]| {
                         let mut interval = (start..end)
-                            .filter(|x| self.mask.get_pixel(*x, y).0[0] == 255)
+                            .filter(|x| self.mask.get_pixel(*x, y).0[0] != 0)
                             .map(|x| self.image.get_pixel(x, y))
                             .collect::<Vec<&Rgba<u8>>>();
                         interval.sort_by_key(|p| sort_fn(p));
