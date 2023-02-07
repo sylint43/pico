@@ -18,6 +18,7 @@ use self::interval::Interval;
 use image::{GrayImage, ImageBuffer, Rgba, RgbaImage};
 use ordered_float::OrderedFloat;
 pub use sorting::*;
+use std::iter;
 
 pub type SortFn = dyn Fn(&Rgba<u8>) -> OrderedFloat<f32>;
 
@@ -55,17 +56,15 @@ impl PixelSort {
     {
         (0..self.image.height())
             .map(|y| {
-                let width_slice = &[self.image.width()];
-                let xs = [0u32]
-                    .iter()
-                    .chain(&intervals[y as usize])
-                    .chain(width_slice)
-                    .collect::<Vec<&u32>>();
+                let xs = iter::once(0u32)
+                    .chain(intervals[y as usize].clone())
+                    .chain(iter::once(self.image.width()))
+                    .collect::<Vec<u32>>();
                 let row = xs
                     .windows(2)
-                    .flat_map(<&[&u32; 2]>::try_from)
-                    .flat_map(|[&start, &end]| {
-                        let mut interval = (start..end)
+                    .flat_map(<&[u32; 2]>::try_from)
+                    .flat_map(|[start, end]| {
+                        let mut interval = (*start..*end)
                             .filter(|x| self.mask.get_pixel(*x, y).0[0] != 0)
                             .map(|x| self.image.get_pixel(x, y))
                             .collect::<Vec<&Rgba<u8>>>();
