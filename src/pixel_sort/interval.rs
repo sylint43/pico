@@ -63,14 +63,10 @@ impl Interval for Random {
         let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
 
         for y in 0..image.height() {
-            let mut x = 0;
-            loop {
-                x += (self.scale as f32 * rng.gen::<f32>()) as u32;
-                if x > image.width() {
-                    break;
-                }
-
+            let mut x = (self.scale as f32 * rng.gen::<f32>()) as u32;
+            while x < image.width() {
                 intervals[y as usize].push(x);
+                x += (self.scale as f32 * rng.gen::<f32>()) as u32;
             }
         }
 
@@ -88,14 +84,10 @@ impl Interval for Wave {
         let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
 
         for y in 0..image.height() {
-            let mut x = 0;
-            loop {
-                x += self.scale + rng.gen_range(0..10);
-                if x > image.width() {
-                    break;
-                }
-
+            let mut x = self.scale + rng.gen_range(0..10);
+            while x < image.width() {
                 intervals[y as usize].push(x);
+                x += self.scale + rng.gen_range(0..10);
             }
         }
 
