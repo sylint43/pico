@@ -16,6 +16,7 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use self::interval::Interval;
 use image::{GrayImage, ImageBuffer, Rgba, RgbaImage};
+use itertools::Itertools;
 use ordered_float::OrderedFloat;
 pub use sorting::*;
 use std::iter;
@@ -56,23 +57,17 @@ impl PixelSort {
     {
         (0..self.image.height())
             .map(|y| {
-                let xs = iter::once(0u32)
+                iter::once(0u32)
                     .chain(intervals[y as usize].clone())
                     .chain(iter::once(self.image.width()))
-                    .collect::<Vec<u32>>();
-                let row = xs
-                    .windows(2)
-                    .flat_map(<&[u32; 2]>::try_from)
-                    .flat_map(|[start, end]| {
-                        let mut interval = (*start..*end)
+                    .tuple_windows::<(_, _)>()
+                    .flat_map(|(start, end)| {
+                        (start..end)
                             .filter(|x| self.mask.get_pixel(*x, y).0[0] != 0)
                             .map(|x| self.image.get_pixel(x, y))
-                            .collect::<Vec<&Rgba<u8>>>();
-                        interval.sort_by_key(|p| sort_fn(p));
-                        interval
+                            .sorted_by_key(|p| sort_fn(p))
                     })
-                    .collect::<Vec<&Rgba<u8>>>();
-                row
+                    .collect::<Vec<&Rgba<u8>>>()
             })
             .collect::<Vec<Vec<&Rgba<u8>>>>()
     }
