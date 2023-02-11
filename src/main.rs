@@ -16,6 +16,7 @@
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use clap::{Parser, Subcommand, ValueEnum};
 use image::{ImageBuffer, Pixel, Rgba};
+use memoize::memoize;
 use pico::pixel_sort::{self, interval, PixelSort, SortFn};
 use std::{ffi::OsStr, path::PathBuf};
 
@@ -182,6 +183,7 @@ fn main() -> Result<(), image::ImageError> {
 }
 
 fn fib(n: u8) -> u64 {
+    #[memoize]
     fn fib_inner(n: u8, prev_fib: u64, fib: u64) -> u64 {
         match n {
             0 => prev_fib,

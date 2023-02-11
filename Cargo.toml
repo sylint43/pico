@@ -13,3 +13,4 @@ clap = { version = "4.1", features = ["derive"] }
 ordered-float = "3.4"
 rand = "0.8"
 itertools = "0.10"
+memoize = "0.4"
