@@ -37,6 +37,7 @@ struct Cmd {
 enum GlitchMode {
     Cbrt,
     Fib,
+    Sum,
     PixelSort {
         #[command(subcommand)]
         interval: IntervalMode,
@@ -120,6 +121,13 @@ fn main() -> Result<(), image::ImageError> {
 
             image
         }
+        GlitchMode::Sum => {
+            for pixel in image.pixels_mut() {
+                pixel.apply(sum_of_squares)
+            }
+
+            image
+        }
         GlitchMode::PixelSort {
             interval,
             mask,
@@ -191,4 +199,21 @@ fn fib(n: u8) -> u64 {
         }
     }
     fib_inner(n, 0, 1)
+}
+
+fn divisors(n: u8) -> Vec<u8> {
+    let sqrt = ((n as f32).sqrt()) as u8;
+    let divisors = (1..sqrt).filter(|divisor| n % *divisor == 0);
+    let divisors_clone = divisors.clone();
+    divisors
+        .chain(divisors_clone.map(|divisor| n / divisor))
+        .collect()
+}
+
+fn sum_of_squares(n: u8) -> u8 {
+    (divisors(n)
+        .iter()
+        .map(|divisor| (*divisor as u64).pow(2))
+        .sum::<u64>()
+        % 255) as u8
 }
