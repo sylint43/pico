@@ -116,7 +116,7 @@ fn main() -> Result<(), image::ImageError> {
         }
         GlitchMode::Fib => {
             for pixel in image.pixels_mut() {
-                pixel.apply(|p| (fib(p) % 255) as u8)
+                pixel.apply(|p| (fib(p) % 256) as u8)
             }
 
             image
