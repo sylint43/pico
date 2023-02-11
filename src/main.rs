@@ -215,5 +215,5 @@ fn sum_of_squares(n: u8) -> u8 {
         .iter()
         .map(|divisor| (*divisor as u64).pow(2))
         .sum::<u64>()
-        % 255) as u8
+        % 256) as u8
 }
