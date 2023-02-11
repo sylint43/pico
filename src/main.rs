@@ -35,6 +35,7 @@ struct Cmd {
 #[derive(Subcommand, Debug)]
 enum GlitchMode {
     Cbrt,
+    Fib,
     PixelSort {
         #[command(subcommand)]
         interval: IntervalMode,
@@ -111,6 +112,13 @@ fn main() -> Result<(), image::ImageError> {
 
             image
         }
+        GlitchMode::Fib => {
+            for pixel in image.pixels_mut() {
+                pixel.apply(|p| (fib(p) % 255) as u8)
+            }
+
+            image
+        }
         GlitchMode::PixelSort {
             interval,
             mask,
@@ -171,4 +179,14 @@ fn main() -> Result<(), image::ImageError> {
     output_image.save(output_file)?;
 
     Ok(())
+}
+
+fn fib(n: u8) -> u64 {
+    fn fib_inner(n: u8, prev_fib: u64, fib: u64) -> u64 {
+        match n {
+            0 => prev_fib,
+            n => fib_inner(n - 1, fib, prev_fib + fib),
+        }
+    }
+    fib_inner(n, 0, 1)
 }
