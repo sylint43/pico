@@ -55,16 +55,18 @@ impl PixelSort {
     where
         F: Fn(&Rgba<u8>) -> OrderedFloat<f32>,
     {
-        (0..self.image.height())
-            .map(|y| {
+        intervals
+            .into_iter()
+            .enumerate()
+            .map(|(y, xs)| {
                 iter::once(0u32)
-                    .chain(intervals[y as usize].clone())
+                    .chain(xs)
                     .chain(iter::once(self.image.width()))
                     .tuple_windows::<(_, _)>()
                     .flat_map(|(start, end)| {
                         (start..end)
-                            .filter(|x| self.mask.get_pixel(*x, y).0[0] != 0)
-                            .map(|x| self.image.get_pixel(x, y))
+                            .filter(|x| self.mask.get_pixel(*x, y as u32).0[0] != 0)
+                            .map(|x| self.image.get_pixel(x, y as u32))
                             .sorted_by_key(|p| sort_fn(p))
                     })
                     .collect::<Vec<&Rgba<u8>>>()
