@@ -18,6 +18,7 @@ use clap::{Parser, Subcommand, ValueEnum};
 use image::{ImageBuffer, Pixel, Rgba};
 use memoize::memoize;
 use pico::pixel_sort::{self, interval, PixelSort, SortFn};
+use rand::seq::SliceRandom;
 use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug, Parser)]
@@ -46,6 +47,7 @@ enum GlitchMode {
         #[arg(short, long, value_enum, default_value_t=Sort::Lightness)]
         sort: Sort,
     },
+    Shuffle,
 }
 
 #[derive(Subcommand, Debug)]
@@ -124,6 +126,15 @@ fn main() -> Result<(), image::ImageError> {
         GlitchMode::Sum => {
             for pixel in image.pixels_mut() {
                 pixel.apply(sum_of_squares)
+            }
+
+            image
+        }
+        GlitchMode::Shuffle => {
+            let mut rng = rand::thread_rng();
+
+            for pixel in image.pixels_mut() {
+                pixel.channels_mut().shuffle(&mut rng)
             }
 
             image
