@@ -111,21 +111,21 @@ fn main() -> Result<(), image::ImageError> {
             image.pixels_mut().for_each(|pixel| {
                 let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
                 let channels_f32 = f32::from_ne_bytes(bytes.try_into().unwrap());
-                *pixel = Rgba::from(channels_f32.cbrt().to_ne_bytes())
+                *pixel = Rgba::from(channels_f32.cbrt().to_ne_bytes());
             });
 
             image
         }
         GlitchMode::Fib => {
             for pixel in image.pixels_mut() {
-                pixel.apply(|p| (fib(p) % 256) as u8)
+                pixel.apply(|p| (fib(p) % 256) as u8);
             }
 
             image
         }
         GlitchMode::Sum => {
             for pixel in image.pixels_mut() {
-                pixel.apply(sum_of_squares)
+                pixel.apply(sum_of_squares);
             }
 
             image
@@ -134,7 +134,7 @@ fn main() -> Result<(), image::ImageError> {
             let mut rng = rand::thread_rng();
 
             for pixel in image.pixels_mut() {
-                pixel.channels_mut().shuffle(&mut rng)
+                pixel.channels_mut().shuffle(&mut rng);
             }
 
             image

@@ -111,7 +111,7 @@ impl Interval for File {
 
         for (x, y, p) in self.mask.enumerate_pixels() {
             if p.0[0] == 0 {
-                intervals[y as usize].push(x)
+                intervals[y as usize].push(x);
             }
         }
 
