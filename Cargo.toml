@@ -8,21 +8,22 @@ description = "A small image editor"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-image = "0.24"
+image = "0.25"
 clap = { version = "4.1", features = ["derive"] }
-ordered-float = "3.4"
+ordered-float = "4.2"
 rand = "0.8"
-itertools = "0.10"
+itertools = "0.13"
 memoize = "0.4"
 
 [lints.rust]
-future_incompatible = "warn"
-nonstandard_style = "warn"
-rust_2018_idioms = "warn"
+future_incompatible = { level = "warn", priority = -1 }
+nonstandard_style = { level = "warn", priority = -1 }
+rust_2018_idioms = { level = "warn", priority = -1 }
 unsafe_code = "forbid"
 
 [lints.clippy]
-all = "warn"
+all = { level = "warn", priority = -1 }
+unsafe_code = "forbid"
 await_holding_lock = "warn"
 char_lit_as_u8 = "warn"
 checked_conversions = "warn"
