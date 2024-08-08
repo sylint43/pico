@@ -125,11 +125,14 @@ fn main() -> Result<(), image::ImageError> {
 
     let mut output_image = match args.glitch {
         GlitchMode::Cbrt => {
-            image.pixels_mut().for_each(|pixel| {
-                let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
-                let channels_f32 = f32::from_ne_bytes(bytes.try_into().unwrap());
-                *pixel = Rgba::from(channels_f32.cbrt().to_ne_bytes());
-            });
+            image
+                .enumerate_pixels_mut()
+                .filter(|(x, y, _)| mask.get_pixel(*x, *y).0[0] != 0)
+                .for_each(|(_, _, pixel)| {
+                    let (bytes, _) = pixel.channels().split_at(std::mem::size_of::<f32>());
+                    let channels_f32 = f32::from_ne_bytes(bytes.try_into().unwrap());
+                    *pixel = Rgba::from(channels_f32.cbrt().to_ne_bytes());
+                });
 
             image
         }
