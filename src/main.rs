@@ -137,14 +137,20 @@ fn main() -> Result<(), image::ImageError> {
             image
         }
         GlitchMode::Fib => {
-            for pixel in image.pixels_mut() {
+            for (_, _, pixel) in image
+                .enumerate_pixels_mut()
+                .filter(|(x, y, _)| mask.get_pixel(*x, *y).0[0] != 0)
+            {
                 pixel.apply(|p| (fib(p) % 256) as u8);
             }
 
             image
         }
         GlitchMode::Sum => {
-            for pixel in image.pixels_mut() {
+            for (_, _, pixel) in image
+                .enumerate_pixels_mut()
+                .filter(|(x, y, _)| mask.get_pixel(*x, *y).0[0] != 0)
+            {
                 pixel.apply(sum_of_squares);
             }
 
@@ -153,7 +159,10 @@ fn main() -> Result<(), image::ImageError> {
         GlitchMode::Shuffle => {
             let mut rng = rand::thread_rng();
 
-            for pixel in image.pixels_mut() {
+            for (_, _, pixel) in image
+                .enumerate_pixels_mut()
+                .filter(|(x, y, _)| mask.get_pixel(*x, *y).0[0] != 0)
+            {
                 pixel.channels_mut().shuffle(&mut rng);
             }
 
