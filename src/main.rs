@@ -29,6 +29,8 @@ struct Cmd {
     #[arg(short, long)]
     input: PathBuf,
     #[arg(short, long)]
+    mask: Option<PathBuf>,
+    #[arg(short, long)]
     output: Option<PathBuf>,
     #[arg(short, long, value_enum)]
     angle: Option<Angle>,
@@ -42,8 +44,6 @@ enum GlitchMode {
     PixelSort {
         #[command(subcommand)]
         interval: IntervalMode,
-        #[arg(short, long)]
-        mask: Option<PathBuf>,
         #[arg(short, long, value_enum, default_value_t=Sort::Lightness)]
         sort: Sort,
     },
@@ -98,12 +98,29 @@ fn main() -> Result<(), image::ImageError> {
             .into(),
     );
     let mut image = image::open(args.input)?.to_rgba8();
+    let mut mask = match args.mask {
+        Some(path) => image::open(path)?.to_luma8(),
+        None => ImageBuffer::from_fn(image.width(), image.height(), |_, _| [255].into()),
+    };
+
+    assert_eq!(
+        mask.dimensions(),
+        image.dimensions(),
+        "Mask must be same size as input image"
+    );
 
     image = match args.angle {
         Some(Angle::Ninty) => image::imageops::rotate90(&image),
         Some(Angle::OneEighty) => image::imageops::rotate180(&image),
         Some(Angle::TwoSeventy) => image::imageops::rotate270(&image),
         None => image,
+    };
+
+    mask = match args.angle {
+        Some(Angle::Ninty) => image::imageops::rotate90(&mask),
+        Some(Angle::OneEighty) => image::imageops::rotate180(&mask),
+        Some(Angle::TwoSeventy) => image::imageops::rotate270(&mask),
+        None => mask,
     };
 
     let mut output_image = match args.glitch {
@@ -139,31 +156,7 @@ fn main() -> Result<(), image::ImageError> {
 
             image
         }
-        GlitchMode::PixelSort {
-            interval,
-            mask,
-            sort,
-        } => {
-            let mask = match mask {
-                Some(path) => match args.angle {
-                    Some(Angle::Ninty) => image::imageops::rotate90(&image::open(path)?.to_luma8()),
-                    Some(Angle::OneEighty) => {
-                        image::imageops::rotate180(&image::open(path)?.to_luma8())
-                    }
-                    Some(Angle::TwoSeventy) => {
-                        image::imageops::rotate270(&image::open(path)?.to_luma8())
-                    }
-                    None => image::open(path)?.to_luma8(),
-                },
-                None => ImageBuffer::from_fn(image.width(), image.height(), |_, _| [255].into()),
-            };
-
-            assert_eq!(
-                mask.dimensions(),
-                image.dimensions(),
-                "Mask must be same size as input image"
-            );
-
+        GlitchMode::PixelSort { interval, sort } => {
             let interval: Box<dyn interval::Interval> = match interval {
                 IntervalMode::Threshold { lower, upper } => {
                     Box::new(interval::Threshold { lower, upper })
