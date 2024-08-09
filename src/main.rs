@@ -176,7 +176,13 @@ fn main() -> Result<(), image::ImageError> {
                 IntervalMode::Random { scale } => Box::new(interval::Random { scale }),
                 IntervalMode::Wave { scale } => Box::new(interval::Wave { scale }),
                 IntervalMode::File { path } => {
-                    let mask = image::open(path)?.to_luma8();
+                    let mut mask = image::open(path)?.to_luma8();
+                    mask = match args.angle {
+                        Some(Angle::Ninty) => image::imageops::rotate90(&mask),
+                        Some(Angle::OneEighty) => image::imageops::rotate180(&mask),
+                        Some(Angle::TwoSeventy) => image::imageops::rotate270(&mask),
+                        None => mask,
+                    };
                     Box::new(interval::File { mask })
                 }
                 IntervalMode::None => Box::new(interval::None),
