@@ -42,7 +42,7 @@
                 "-i",
                 "IMG_0978.JPG",
                 "pixel-sort",
-                "--interval",
+                "--range",
                 "threshold",
                 "-l",
                 "0.2",

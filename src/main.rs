@@ -17,7 +17,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use image::{ImageBuffer, Pixel, Rgba};
 use memoize::memoize;
-use pico::pixel_sort::{self, interval, PixelSort, SortFn};
+use pico::pixel_sort::{self, range, PixelSort, SortFn};
 use rand::seq::SliceRandom;
 use std::{ffi::OsStr, path::PathBuf};
 
@@ -43,7 +43,7 @@ enum GlitchMode {
     Sum,
     PixelSort {
         #[command(subcommand)]
-        interval: IntervalMode,
+        range: RangeMode,
         #[arg(short, long, value_enum, default_value_t=Sort::Lightness)]
         sort: Sort,
     },
@@ -51,7 +51,7 @@ enum GlitchMode {
 }
 
 #[derive(Subcommand, Debug)]
-enum IntervalMode {
+enum RangeMode {
     Threshold {
         #[arg(default_value_t = 0.2, short, long)]
         lower: f32,
@@ -168,24 +168,26 @@ fn main() -> Result<(), image::ImageError> {
 
             image
         }
-        GlitchMode::PixelSort { interval, sort } => {
-            let interval: Box<dyn interval::Interval> = match interval {
-                IntervalMode::Threshold { lower, upper } => {
-                    Box::new(interval::Threshold { lower, upper })
+        GlitchMode::PixelSort { range, sort } => {
+            let range: Box<dyn range::PixelRange> = match range {
+                RangeMode::Threshold { lower, upper } => {
+                    Box::new(range::Threshold { lower, upper })
                 }
-                IntervalMode::Random { scale } => Box::new(interval::Random { scale }),
-                IntervalMode::Wave { scale } => Box::new(interval::Wave { scale }),
-                IntervalMode::File { path } => {
+                RangeMode::Random { scale } => Box::new(range::Random { scale }),
+                RangeMode::Wave { scale } => Box::new(range::Wave { scale }),
+                RangeMode::File { path } => {
                     let mut mask = image::open(path)?.to_luma8();
+
                     mask = match args.angle {
                         Some(Angle::Ninty) => image::imageops::rotate90(&mask),
                         Some(Angle::OneEighty) => image::imageops::rotate180(&mask),
                         Some(Angle::TwoSeventy) => image::imageops::rotate270(&mask),
                         None => mask,
                     };
-                    Box::new(interval::File { mask })
+
+                    Box::new(range::File { mask })
                 }
-                IntervalMode::None => Box::new(interval::None),
+                RangeMode::None => Box::new(range::None),
             };
 
             let sort: Box<SortFn> = match sort {
@@ -196,7 +198,7 @@ fn main() -> Result<(), image::ImageError> {
                 Sort::Minimum => Box::new(pixel_sort::minimum),
             };
 
-            PixelSort::new(image, mask, interval, sort).sort()
+            PixelSort::new(image, mask, range, sort).sort()
         }
     };
 

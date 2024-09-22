@@ -14,7 +14,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
-use self::interval::Interval;
+use self::range::PixelRange;
 use image::{GrayImage, ImageBuffer, Rgba, RgbaImage};
 use itertools::Itertools;
 use ordered_float::OrderedFloat;
@@ -26,7 +26,7 @@ pub type SortFn = dyn Fn(&Rgba<u8>) -> OrderedFloat<f32>;
 pub struct PixelSort {
     image: RgbaImage,
     mask: GrayImage,
-    interval: Box<dyn Interval>,
+    range: Box<dyn PixelRange>,
     sort_fn: Box<SortFn>,
 }
 
@@ -34,35 +34,35 @@ impl PixelSort {
     pub fn new(
         image: RgbaImage,
         mask: GrayImage,
-        interval: Box<dyn Interval>,
+        range: Box<dyn PixelRange>,
         sort_fn: Box<SortFn>,
     ) -> Self {
         Self {
             image,
             mask,
-            interval,
+            range,
             sort_fn,
         }
     }
 
     pub fn sort(&self) -> RgbaImage {
-        let intervals = self.interval.create_intervals(&self.image);
-        let pixels = self.sort_pixels(intervals, &self.sort_fn);
+        let ranges = self.range.create_pixel_ranges(&self.image);
+        let pixels = self.sort_pixels(ranges, &self.sort_fn);
         self.place_pixels(pixels)
     }
 
-    fn sort_pixels<F>(&self, intervals: Vec<Vec<u32>>, sort_fn: F) -> Vec<Vec<&Rgba<u8>>>
+    fn sort_pixels<F>(&self, ranges: Vec<Vec<u32>>, sort_fn: F) -> Vec<Vec<&Rgba<u8>>>
     where
         F: Fn(&Rgba<u8>) -> OrderedFloat<f32>,
     {
-        intervals
+        ranges
             .into_iter()
             .enumerate()
             .map(|(y, xs)| {
                 iter::once(0u32)
                     .chain(xs)
                     .chain(iter::once(self.image.width()))
-                    .tuple_windows::<(_, _)>()
+                    .tuple_windows::<(u32, u32)>()
                     .flat_map(|(start, end)| {
                         (start..end)
                             .filter(|x| self.mask.get_pixel(*x, y as u32).0[0] != 0)
@@ -92,5 +92,5 @@ impl PixelSort {
     }
 }
 
-pub mod interval;
+pub mod range;
 mod sorting;

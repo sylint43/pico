@@ -20,18 +20,8 @@ use image::{GrayImage, RgbaImage};
 use ordered_float::OrderedFloat;
 use rand::Rng;
 
-/*
-Intervals are (x, y) pixel coordinates into the input image that marks the end of a interval
-of pixels. They will always have image.height() rows but each row may not have image.width() columns.
-
-A coordinate is inserted into the vec based on the interval function used to create the intervals
-
-Threshold looks for pixels within a certain lightness threshold and marks pixels that don't pass
-Random randomly jumps to a pixel in a row and adds it to the interval list. Can be scaled.
- */
-
-pub trait Interval {
-    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>>;
+pub trait PixelRange {
+    fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>>;
 }
 
 pub struct Threshold {
@@ -39,8 +29,8 @@ pub struct Threshold {
     pub upper: f32,
 }
 
-impl Interval for Threshold {
-    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
+impl PixelRange for Threshold {
+    fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
         let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
         for (x, y, p) in image.enumerate_pixels() {
             let level = lightness(p);
@@ -57,8 +47,8 @@ pub struct Random {
     pub scale: u32,
 }
 
-impl Interval for Random {
-    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
+impl PixelRange for Random {
+    fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
         let mut rng = rand::thread_rng();
         let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
 
@@ -78,8 +68,8 @@ pub struct Wave {
     pub scale: u32,
 }
 
-impl Interval for Wave {
-    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
+impl PixelRange for Wave {
+    fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
         let mut rng = rand::thread_rng();
         let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
 
@@ -99,8 +89,8 @@ pub struct File {
     pub mask: GrayImage,
 }
 
-impl Interval for File {
-    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
+impl PixelRange for File {
+    fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
         assert_eq!(
             image.dimensions(),
             self.mask.dimensions(),
@@ -110,7 +100,10 @@ impl Interval for File {
         let mut intervals = vec![vec![]; image.height() as usize];
 
         for (x, y, p) in self.mask.enumerate_pixels() {
-            if p.0[0] == 0 {
+            let pixel_value = p.0[0];
+            let black = 0;
+
+            if pixel_value == black {
                 intervals[y as usize].push(x);
             }
         }
@@ -121,8 +114,8 @@ impl Interval for File {
 
 pub struct None;
 
-impl Interval for None {
-    fn create_intervals(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
+impl PixelRange for None {
+    fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
         vec![vec![]; image.height() as usize]
     }
 }
