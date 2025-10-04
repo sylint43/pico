@@ -49,14 +49,14 @@ pub struct Random {
 
 impl PixelRange for Random {
     fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
 
         for y in 0..image.height() {
-            let mut x = (self.scale as f32 * rng.gen::<f32>()) as u32;
+            let mut x = (self.scale as f32 * rng.random::<f32>()) as u32;
             while x < image.width() {
                 intervals[y as usize].push(x);
-                x += (self.scale as f32 * rng.gen::<f32>()) as u32;
+                x += (self.scale as f32 * rng.random::<f32>()) as u32;
             }
         }
 
@@ -70,14 +70,14 @@ pub struct Wave {
 
 impl PixelRange for Wave {
     fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
 
         for y in 0..image.height() {
-            let mut x = self.scale + rng.gen_range(0..10);
+            let mut x = self.scale + rng.random_range(0..10);
             while x < image.width() {
                 intervals[y as usize].push(x);
-                x += self.scale + rng.gen_range(0..10);
+                x += self.scale + rng.random_range(0..10);
             }
         }
 

@@ -162,7 +162,7 @@ fn main() -> Result<(), image::ImageError> {
             image
         }
         GlitchMode::Shuffle => {
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
 
             for (_, _, pixel) in image
                 .enumerate_pixels_mut()
