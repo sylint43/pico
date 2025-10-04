@@ -15,14 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with pico.  If not, see <http://www.gnu.org/licenses/>.
 use clap::{Parser, Subcommand, ValueEnum};
-use image::{GenericImageView, GrayImage, ImageBuffer, Pixel, Primitive, Rgba};
+use image::{imageops, ImageBuffer, Pixel, Rgba};
 use memoize::memoize;
-use num_traits::NumCast;
 use pico::pixel_sort::{self, range, PixelSort, SortFn};
-use rand::{
-    distr::{Distribution, Uniform},
-    seq::SliceRandom,
-};
+use rand::{random_range, seq::SliceRandom};
 use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug, Parser)]
@@ -173,7 +169,7 @@ fn main() -> Result<(), image::ImageError> {
 
             image
         }
-        GlitchMode::HueRotate => huerotate(&image, mask),
+        GlitchMode::HueRotate => imageops::huerotate(&image, random_range(0..=180)),
         GlitchMode::PixelSort { range, sort } => {
             let range: Box<dyn range::PixelRange> = match range {
                 RangeMode::Threshold { lower, upper } => {
@@ -246,72 +242,4 @@ fn sum_of_squares(n: u8) -> u8 {
         .map(|divisor| (*divisor as u64).pow(2))
         .sum::<u64>()
         % 256) as u8
-}
-
-fn huerotate<I, P, S>(image: &I, mask: GrayImage) -> ImageBuffer<P, Vec<S>>
-where
-    I: GenericImageView<Pixel = P>,
-    P: Pixel<Subpixel = S> + 'static,
-    S: Primitive + 'static,
-{
-    let (width, height) = image.dimensions();
-    let mut out = ImageBuffer::new(width, height);
-    let rotate_range = Uniform::new_inclusive(0.0, 180.).unwrap();
-    let mut rng = rand::rng();
-
-    for (x, y, pixel) in out.enumerate_pixels_mut() {
-        if mask.get_pixel(x, y).0[0] == 0 {
-            continue;
-        }
-
-        let p = image.get_pixel(x, y);
-
-        let angle: f64 = rotate_range.sample(&mut rng);
-
-        let cosv = angle.to_radians().cos();
-        let sinv = angle.to_radians().sin();
-        let matrix: [f64; 9] = [
-            // Reds
-            0.213 + cosv * 0.787 - sinv * 0.213,
-            0.715 - cosv * 0.715 - sinv * 0.715,
-            0.072 - cosv * 0.072 + sinv * 0.928,
-            // Greens
-            0.213 - cosv * 0.213 + sinv * 0.143,
-            0.715 + cosv * 0.285 + sinv * 0.140,
-            0.072 - cosv * 0.072 - sinv * 0.283,
-            // Blues
-            0.213 - cosv * 0.213 - sinv * 0.787,
-            0.715 - cosv * 0.715 + sinv * 0.715,
-            0.072 + cosv * 0.928 + sinv * 0.072,
-        ];
-
-        #[allow(deprecated)]
-        let (ch1, ch2, ch3, ch4) = p.channels4();
-        let vec: (f64, f64, f64, f64) = (
-            NumCast::from(ch1).unwrap(),
-            NumCast::from(ch2).unwrap(),
-            NumCast::from(ch3).unwrap(),
-            NumCast::from(ch4).unwrap(),
-        );
-
-        let r = vec.0;
-        let g = vec.1;
-        let b = vec.2;
-
-        let new_r = matrix[0] * r + matrix[1] * g + matrix[2] * b;
-        let new_g = matrix[3] * r + matrix[4] * g + matrix[5] * b;
-        let new_b = matrix[6] * r + matrix[7] * g + matrix[8] * b;
-        let max = 255f64;
-
-        #[allow(deprecated)]
-        let outpixel = Pixel::from_channels(
-            NumCast::from(new_r.clamp(0., max)).unwrap(),
-            NumCast::from(new_g.clamp(0., max)).unwrap(),
-            NumCast::from(new_b.clamp(0., max)).unwrap(),
-            NumCast::from(vec.3.clamp(0., max)).unwrap(),
-        );
-        *pixel = outpixel;
-    }
-
-    out
 }
