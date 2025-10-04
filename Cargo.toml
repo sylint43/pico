@@ -1,6 +1,6 @@
 [package]
 name = "pico"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Sylvia Waldron"]
 description = "A small image editor"
@@ -10,10 +10,11 @@ description = "A small image editor"
 [dependencies]
 image = "0.24"
 clap = { version = "4.1", features = ["derive"] }
-ordered-float = "4.2"
-rand = "0.8"
-itertools = "0.13"
-memoize = "0.4"
+ordered-float = "5.1"
+rand = "0.9"
+itertools = "0.14"
+memoize = "0.5"
+num-traits = "0.2.19"
 
 [lints.rust]
 future_incompatible = { level = "warn", priority = -1 }
