@@ -40,14 +40,8 @@
             },
             "args": [
                 "-i",
-                "IMG_0978.JPG",
-                "pixel-sort",
-                "--range",
-                "threshold",
-                "-l",
-                "0.2",
-                "-u",
-                "0.5"
+                "test.jpg",
+                "hue-rotate",
             ],
             "cwd": "${workspaceFolder}"
         },
