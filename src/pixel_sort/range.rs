@@ -31,15 +31,15 @@ pub struct Threshold {
 
 impl PixelRange for Threshold {
     fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
-        let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
+        let mut ranges: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
         for (x, y, p) in image.enumerate_pixels() {
             let level = lightness(p);
             if level < OrderedFloat(self.lower * 255.) || level > OrderedFloat(self.upper * 255.) {
-                intervals[y as usize].push(x);
+                ranges[y as usize].push(x);
             }
         }
 
-        intervals
+        ranges
     }
 }
 
@@ -50,17 +50,17 @@ pub struct Random {
 impl PixelRange for Random {
     fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
         let mut rng = rand::rng();
-        let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
+        let mut ranges: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
 
         for y in 0..image.height() {
             let mut x = (self.scale as f32 * rng.random::<f32>()) as u32;
             while x < image.width() {
-                intervals[y as usize].push(x);
+                ranges[y as usize].push(x);
                 x += (self.scale as f32 * rng.random::<f32>()) as u32;
             }
         }
 
-        intervals
+        ranges
     }
 }
 
@@ -71,17 +71,17 @@ pub struct Wave {
 impl PixelRange for Wave {
     fn create_pixel_ranges(&self, image: &RgbaImage) -> Vec<Vec<u32>> {
         let mut rng = rand::rng();
-        let mut intervals: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
+        let mut ranges: Vec<Vec<u32>> = vec![vec![]; image.height() as usize];
 
         for y in 0..image.height() {
             let mut x = self.scale + rng.random_range(0..10);
             while x < image.width() {
-                intervals[y as usize].push(x);
+                ranges[y as usize].push(x);
                 x += self.scale + rng.random_range(0..10);
             }
         }
 
-        intervals
+        ranges
     }
 }
 
@@ -97,18 +97,18 @@ impl PixelRange for File {
             "Mask must be same size as input image"
         );
 
-        let mut intervals = vec![vec![]; image.height() as usize];
+        let mut ranges = vec![vec![]; image.height() as usize];
 
         for (x, y, p) in self.mask.enumerate_pixels() {
             let pixel_value = p.0[0];
             let black = 0;
 
             if pixel_value == black {
-                intervals[y as usize].push(x);
+                ranges[y as usize].push(x);
             }
         }
 
-        intervals
+        ranges
     }
 }
 
