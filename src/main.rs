@@ -229,7 +229,7 @@ fn fib(n: u8) -> u64 {
 
 fn divisors(n: u8) -> Vec<u8> {
     let sqrt = ((n as f32).sqrt()) as u8;
-    let divisors = (1..sqrt).filter(|divisor| n % *divisor == 0);
+    let divisors = (1..sqrt).filter(|divisor| n.is_multiple_of(*divisor));
     let divisors_clone = divisors.clone();
     divisors
         .chain(divisors_clone.map(|divisor| n / divisor))
