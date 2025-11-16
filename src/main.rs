@@ -142,7 +142,7 @@ fn main() -> Result<(), image::ImageError> {
                 .enumerate_pixels_mut()
                 .filter(|(x, y, _)| mask.get_pixel(*x, *y).0[0] != 0)
             {
-                pixel.apply(|p| (fib(p) % 256) as u8);
+                pixel.apply(|channel| (fib(channel) % 256) as u8);
             }
 
             image
